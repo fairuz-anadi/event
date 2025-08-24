@@ -1,66 +1,126 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react'
 
-const AuthContext = createContext();
+const AuthContext = createContext()
 
-export function useAuth() {
-  return useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
 }
 
-export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const login = async (email, password) => {
-    // Add your login logic here
+  // Mock authentication functions - replace with real API calls
+  const login = async (credentials) => {
     try {
-      // Example login logic
-      console.log('Logging in with:', email, password);
-      // Set user after successful login
-      setCurrentUser({ email });
-      return { success: true };
+      setLoading(true)
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Mock successful login
+      if (credentials.email && credentials.password) {
+        const mockUser = {
+          id: 1,
+          name: 'John Doe',
+          email: credentials.email,
+          university: 'University of Technology',
+          department: 'Computer Science',
+          avatar: null
+        }
+        setUser(mockUser)
+        localStorage.setItem('eventopia_user', JSON.stringify(mockUser))
+        return { success: true }
+      } else {
+        return { success: false, error: 'Invalid credentials' }
+      }
     } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: 'Login failed' }
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
-  const signup = async (email, password) => {
-    // Add your signup logic here
+  const register = async (userData) => {
     try {
-      console.log('Signing up with:', email, password);
-      setCurrentUser({ email });
-      return { success: true };
+      setLoading(true)
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Mock successful registration
+      const mockUser = {
+        id: Date.now(),
+        name: userData.name,
+        email: userData.email,
+        university: userData.university,
+        department: userData.department,
+        year: userData.year,
+        interests: userData.interests,
+        avatar: null
+      }
+      
+      setUser(mockUser)
+      localStorage.setItem('eventopia_user', JSON.stringify(mockUser))
+      return { success: true }
     } catch (error) {
-      console.error('Signup error:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: 'Registration failed' }
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   const logout = () => {
-    setCurrentUser(null);
-  };
+    setUser(null)
+    localStorage.removeItem('eventopia_user')
+  }
 
+  const updateProfile = async (updatedData) => {
+    try {
+      setLoading(true)
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const updatedUser = { ...user, ...updatedData }
+      setUser(updatedUser)
+      localStorage.setItem('eventopia_user', JSON.stringify(updatedUser))
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: 'Profile update failed' }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Check for existing user on app load
   useEffect(() => {
-    // Check if user is already logged in (e.g., from localStorage, token, etc.)
-    const checkAuth = () => {
-      // Add your auth check logic here
-      setLoading(false);
-    };
-    
-    checkAuth();
-  }, []);
+    const savedUser = localStorage.getItem('eventopia_user')
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser))
+      } catch (error) {
+        localStorage.removeItem('eventopia_user')
+      }
+    }
+    setLoading(false)
+  }, [])
 
   const value = {
-    currentUser,
+    user,
     login,
-    signup,
+    register,
     logout,
+    updateProfile,
     loading
-  };
+  }
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
-  );
+  )
 }
+
+export { AuthContext }

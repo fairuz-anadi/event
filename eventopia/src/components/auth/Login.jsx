@@ -1,9 +1,9 @@
 import React, { useState, useContext } from 'react'
-import { AuthContext } from '../context/AuthContext'
-import { Mail, Lock, Eye, EyeOff, Calendar, ArrowRight, X, AlertCircle, CheckCircle, Loader } from 'lucide-react'
+import { AuthContext } from '../contexts/AuthContext'
+import { Mail, Lock, Eye, EyeOff, X, AlertCircle, CheckCircle, Loader, Calendar } from 'lucide-react'
 
 const Login = ({ onClose, onSwitchToRegister }) => {
-  const { login, resetPassword } = useContext(AuthContext)
+  const { login } = useContext(AuthContext)
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -12,8 +12,6 @@ const Login = ({ onClose, onSwitchToRegister }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const [resetEmail, setResetEmail] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,281 +25,191 @@ const Login = ({ onClose, onSwitchToRegister }) => {
 
     setIsLoading(true)
     
-    const result = await login(formData.email, formData.password)
+    const result = await login(formData)
     
     if (result.success) {
-      setSuccess('Login successful! Welcome back.')
-      setTimeout(onClose, 1000)
+      setSuccess('Welcome back to Eventopia!')
+      setTimeout(onClose, 1500)
     } else {
-      setError(result.error)
-    }
-    
-    setIsLoading(false)
-  }
-
-  const handleForgotPassword = async (e) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-
-    if (!resetEmail) {
-      setError('Please enter your email address')
-      return
-    }
-
-    setIsLoading(true)
-    
-    const result = await resetPassword(resetEmail)
-    
-    if (result.success) {
-      setSuccess(result.message)
-      setTimeout(() => setShowForgotPassword(false), 2000)
-    } else {
-      setError(result.error)
+      setError(result.error || 'Login failed. Please try again.')
     }
     
     setIsLoading(false)
   }
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    
     if (error) setError('')
   }
 
   return (
-    <div className="modal-overlay animate-fade-in">
-      <div className="modal-content slide-up max-w-md">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
         {/* Header */}
-        <div className="relative bg-gradient-to-br from-emerald-600 to-teal-600 p-8 text-white">
+        <div className="flex items-center justify-between p-6 border-b border-stone-200">
+          <div>
+            <h2 className="text-xl font-bold text-stone-800">Welcome Back</h2>
+            <p className="text-sm text-stone-600">Sign in to your account</p>
+          </div>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 text-stone-500" />
           </button>
-          
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
-              <Calendar className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Welcome Back</h1>
-              <p className="text-emerald-100">Sign in to Eventopia</p>
-            </div>
-          </div>
         </div>
 
         {/* Content */}
-        <div className="p-8">
-          {!showForgotPassword ? (
-            <>
-              {/* Alerts */}
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-red-700 text-sm">{error}</span>
-                </div>
-              )}
+        <div className="p-6">
+          {/* Brand */}
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center mr-3">
+              <Calendar className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-stone-800">Eventopia</span>
+          </div>
 
-              {success && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-3">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-green-700 text-sm">{success}</span>
-                </div>
-              )}
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
 
-              {/* Login Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-stone-400" />
-                    </div>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="input-field pl-10"
-                      placeholder="student@university.edu"
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
+          {/* Success Message */}
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center">
+              <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+              <span className="text-sm text-green-700">{success}</span>
+            </div>
+          )}
 
-                {/* Password */}
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-stone-400" />
-                    </div>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="input-field pl-10 pr-10"
-                      placeholder="Enter your password"
-                      disabled={isLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-stone-600"
-                      disabled={isLoading}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5 text-stone-400" />
-                      ) : (
-                        <Eye className="h-5 w-5 text-stone-400" />
-                      )}
-                    </button>
-                  </div>
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-stone-400" />
                 </div>
-
-                {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-stone-300 rounded"
-                    />
-                    <span className="ml-2 text-sm text-stone-600">Remember me</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPassword(true)}
-                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-                    disabled={isLoading}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="input-field pl-10"
+                  placeholder="Enter your email"
                   disabled={isLoading}
-                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-stone-400" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="input-field pl-10 pr-10"
+                  placeholder="Enter your password"
+                  disabled={isLoading}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-stone-600"
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader className="animate-spin h-5 w-5 mr-2" />
-                      Signing in...
-                    </>
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-stone-400" />
                   ) : (
-                    <>
-                      Sign In
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </>
+                    <Eye className="h-5 w-5 text-stone-400" />
                   )}
                 </button>
-              </form>
-
-              {/* Demo Credentials */}
-              <div className="mt-6 p-4 bg-stone-50 rounded-lg">
-                <h4 className="text-sm font-medium text-stone-700 mb-2">Demo Credentials</h4>
-                <div className="text-xs text-stone-600 space-y-1">
-                  <p><strong>Email:</strong> demo@university.edu</p>
-                  <p><strong>Password:</strong> demo123</p>
-                </div>
               </div>
+            </div>
 
-              {/* Sign Up Link */}
-              <div className="mt-8 text-center">
-                <p className="text-stone-600">
-                  Don't have an account?{' '}
-                  <button
-                    onClick={onSwitchToRegister}
-                    className="text-emerald-600 hover:text-emerald-700 font-medium"
-                    disabled={isLoading}
-                  >
-                    Sign up here
-                  </button>
-                </p>
-              </div>
-            </>
-          ) : (
-            /* Forgot Password Form */
-            <>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-stone-800 mb-2">Reset Password</h3>
-                <p className="text-stone-600 text-sm">
-                  Enter your email address and we'll send you instructions to reset your password.
-                </p>
-              </div>
+            {/* Forgot Password */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+                disabled={isLoading}
+              >
+                Forgot your password?
+              </button>
+            </div>
 
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-red-700 text-sm">{error}</span>
-                </div>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
               )}
+            </button>
+          </form>
 
-              {success && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-3">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-green-700 text-sm">{success}</span>
-                </div>
-              )}
+          {/* Divider */}
+          <div className="mt-6 mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-stone-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-stone-500">or</span>
+              </div>
+            </div>
+          </div>
 
-              <form onSubmit={handleForgotPassword} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-stone-400" />
-                    </div>
-                    <input
-                      type="email"
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                      className="input-field pl-10"
-                      placeholder="student@university.edu"
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
+          {/* Demo Login */}
+          <button
+            type="button"
+            onClick={() => setFormData({ email: 'demo@example.com', password: 'password123' })}
+            className="w-full btn-secondary text-sm"
+            disabled={isLoading}
+          >
+            Use Demo Account
+          </button>
+        </div>
 
-                <div className="flex space-x-4">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader className="animate-spin h-5 w-5 mr-2" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Send Reset Link'
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPassword(false)}
-                    className="px-6 py-2.5 border border-stone-300 text-stone-700 rounded-lg hover:bg-stone-50 transition-colors font-medium"
-                    disabled={isLoading}
-                  >
-                    Back
-                  </button>
-                </div>
-              </form>
-            </>
-          )}
+        {/* Footer */}
+        <div className="px-6 py-4 bg-stone-50 text-center border-t border-stone-200 rounded-b-xl">
+          <p className="text-sm text-stone-600">
+            Don't have an account?{' '}
+            <button
+              onClick={onSwitchToRegister}
+              className="text-amber-600 hover:text-amber-700 font-medium"
+              disabled={isLoading}
+            >
+              Sign Up
+            </button>
+          </p>
         </div>
       </div>
     </div>
